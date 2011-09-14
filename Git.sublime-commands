@@ -1,0 +1,13 @@
+[
+    { "caption": "git commit", "command": "git_commit" },
+	{ "caption": "git reset", "command": "git_reset" },
+	{ "caption": "git checkout", "command": "git_checkout" },
+	{ "caption": "git branch", "command": "git_branch" },
+	{ "caption": "git add", "command": "git_add" },
+	{ "caption": "git remove", "command": "git_rm" },
+	{ "caption": "git mv", "command": "git_mv" },
+	{ "caption": "git diff", "command": "git_diff" },
+	{ "caption": "git log", "command": "git_log" },
+	{ "caption": "git status", "command": "git_status" },
+	{ "caption": "git blame", "command": "git_blame" }
+]
