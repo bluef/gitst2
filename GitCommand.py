@@ -2,6 +2,7 @@ import functools
 import os
 import subprocess
 import thread
+import re
 
 import sublime
 import sublime_plugin
@@ -86,28 +87,35 @@ class GitAddCommand(sublime_plugin.TextCommand):
 
 
 class GitCheckoutCommand(sublime_plugin.TextCommand):
-    def run(self, edit, branch_or_path=''):
-        global branches
+    def run(self, edit):
+        regexp = re.compile(r'^C\[(.+?)\] D\[(.+?)\] S\[(.+?)\]?$')
+
+        global show_branches, commits
 
         if self.view.file_name():
             folder_name = os.path.dirname(self.view.file_name())
 
-            branches = []
+            show_branches = []
+            commits = []
 
             p = subprocess.Popen(["git", "branch"], stdout=subprocess.PIPE, cwd=folder_name)
             p.wait()
             
-            branches = []
+            show_branches = []
             for line in p.stdout.readlines():
-                branches.append(line.strip("* "))
+                show_branches.append(line.strip("* "))
+                commits.append(line.strip("* "))
 
-            p = subprocess.Popen(["git", "log", "--pretty=format:%H"], stdout=subprocess.PIPE, cwd=folder_name)
+            p = subprocess.Popen(["git", "log", "--pretty=format:C[%h] D[%ad] S[%s]"], stdout=subprocess.PIPE, cwd=folder_name)
             p.wait()
             
             for line in p.stdout.readlines():
-                branches.append(line.strip())
+                regexp_result = regexp.search(line)
+
+                show_branches.append("%(rev)s %(date)s [%(subject)s]" % {'rev':regexp_result.group(1), 'date':regexp_result.group(2), 'subject':regexp_result.group(3)})
+                commits.append(regexp_result.group(1))
             
-            self.view.window().show_quick_panel(branches, self.on_select_branch)
+            self.view.window().show_quick_panel(show_branches, self.on_select_branch)
 
     def on_select_branch(self, index):
         if index == -1:
@@ -116,7 +124,7 @@ class GitCheckoutCommand(sublime_plugin.TextCommand):
         if self.view.file_name():
             folder_name = os.path.dirname(self.view.file_name())
 
-        branch_or_path = branches[index]
+        branch_or_path = show_branches[index]
 
         self.view.window().run_command('exec', {'cmd': ['git', 'checkout', branch_or_path], 'working_dir': folder_name, 'quiet': True})
         self.view.run_command('revert')
@@ -157,6 +165,12 @@ class GitCommitCommand(sublime_plugin.TextCommand):
 
         self.view.window().run_command('exec', {'cmd': ['git', 'commit', '-am', message], 'working_dir': folder_name, 'quiet': True})
 
+class GitPushCommand(sublime_plugin.TextCommand):
+    def run(self, edit, all=False):
+        if self.view.file_name():
+            folder_name = os.path.dirname(self.view.file_name())
+
+            self.view.window().run_command('exec', {'cmd': ['git', 'push'], 'working_dir': folder_name, 'quiet': True})
 
 class GitDiffCommand(sublime_plugin.TextCommand, ProcessListener):
     def run(self, edit, encoding='utf-8', kill=False):

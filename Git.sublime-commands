@@ -1,5 +1,6 @@
 [
     { "caption": "git commit", "command": "git_commit" },
+    { "caption": "git push", "command": "git_push" },
 	{ "caption": "git reset", "command": "git_reset" },
 	{ "caption": "git checkout", "command": "git_checkout" },
 	{ "caption": "git branch", "command": "git_branch" },
